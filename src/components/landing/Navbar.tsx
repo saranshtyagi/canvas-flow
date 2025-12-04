@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 
 const Navbar = () => {
   return (
@@ -33,14 +34,33 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
-              Log in
-            </Button>
-            <Link to="/canvas">
-              <Button variant="hero" size="sm">
-                Start Drawing
-              </Button>
-            </Link>
+            <SignedOut>
+              <Link to="/sign-in">
+                <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
+                  Log in
+                </Button>
+              </Link>
+              <Link to="/sign-up">
+                <Button variant="hero" size="sm">
+                  Sign up
+                </Button>
+              </Link>
+            </SignedOut>
+            <SignedIn>
+              <Link to="/canvas">
+                <Button variant="hero" size="sm">
+                  Open Canvas
+                </Button>
+              </Link>
+              <UserButton 
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "h-9 w-9"
+                  }
+                }}
+              />
+            </SignedIn>
           </div>
         </div>
       </div>
