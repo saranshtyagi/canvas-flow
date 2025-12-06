@@ -14,7 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      canvases: {
+        Row: {
+          content: Json | null
+          created_at: string
+          id: string
+          name: string
+          organization_id: string | null
+          thumbnail: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string | null
+          thumbnail?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: Json | null
+          created_at?: string
+          id?: string
+          name?: string
+          organization_id?: string | null
+          thumbnail?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
