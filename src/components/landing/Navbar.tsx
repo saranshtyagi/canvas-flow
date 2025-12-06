@@ -47,9 +47,9 @@ const Navbar = () => {
               </Link>
             </SignedOut>
             <SignedIn>
-              <Link to="/canvas">
+              <Link to="/dashboard">
                 <Button variant="hero" size="sm">
-                  Open Canvas
+                  Dashboard
                 </Button>
               </Link>
               <UserButton 
