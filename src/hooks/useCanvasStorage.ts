@@ -146,10 +146,10 @@ export const useCanvasStorage = () => {
         .from("canvases")
         .select("*")
         .eq("id", id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as CanvasData;
+      return data as CanvasData | null;
     } catch (error) {
       console.error("Error fetching canvas:", error);
       return null;
