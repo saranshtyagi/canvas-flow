@@ -3,20 +3,39 @@ import { Canvas as FabricCanvas, Rect, Circle, Line, IText, PencilBrush, FabricO
 import { Toolbar, Tool } from "./Toolbar";
 import { ColorPicker } from "./ColorPicker";
 import { StrokeWidthPicker } from "./StrokeWidthPicker";
+import { CollaboratorCursors } from "./CollaboratorCursors";
 import { toast } from "sonner";
+
+interface Collaborator {
+  id: string;
+  name: string;
+  color: string;
+  cursor?: { x: number; y: number };
+}
+
+interface CanvasChange {
+  type: "full" | "object:added" | "object:modified" | "object:removed" | "clear";
+  data: any;
+  userId: string;
+  timestamp: number;
+}
 
 export interface WhiteboardCanvasRef {
   getCanvasJSON: () => any;
   getCanvasThumbnail: () => string;
   loadFromJSON: (json: any) => Promise<void>;
+  applyRemoteChange: (change: CanvasChange) => void;
 }
 
 interface WhiteboardCanvasProps {
   onAutoSave?: () => void;
+  onCanvasChange?: (change: Omit<CanvasChange, "userId" | "timestamp">) => void;
+  onCursorMove?: (cursor: { x: number; y: number }) => void;
+  collaborators?: Collaborator[];
 }
 
 export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvasProps>(
-  ({ onAutoSave }, ref) => {
+  ({ onAutoSave, onCanvasChange, onCursorMove, collaborators = [] }, ref) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const [fabricCanvas, setFabricCanvas] = useState<FabricCanvas | null>(null);
@@ -30,6 +49,7 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
     const currentShape = useRef<FabricObject | null>(null);
     const autoSaveTimeout = useRef<NodeJS.Timeout | null>(null);
     const isInitialized = useRef(false);
+    const isApplyingRemoteChange = useRef(false);
 
     // Expose methods to parent
     useImperativeHandle(ref, () => ({
@@ -47,9 +67,31 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
       },
       loadFromJSON: async (json: any) => {
         if (!fabricCanvas || !json) return;
+        isApplyingRemoteChange.current = true;
         await fabricCanvas.loadFromJSON(json);
         fabricCanvas.renderAll();
         isInitialized.current = true;
+        isApplyingRemoteChange.current = false;
+      },
+      applyRemoteChange: async (change: CanvasChange) => {
+        if (!fabricCanvas) return;
+        
+        isApplyingRemoteChange.current = true;
+        
+        try {
+          if (change.type === "full" && change.data) {
+            await fabricCanvas.loadFromJSON(change.data);
+            fabricCanvas.renderAll();
+          } else if (change.type === "clear") {
+            fabricCanvas.clear();
+            fabricCanvas.backgroundColor = "#ffffff";
+            fabricCanvas.renderAll();
+          }
+        } catch (error) {
+          console.error("[Canvas] Error applying remote change:", error);
+        }
+        
+        isApplyingRemoteChange.current = false;
       },
     }));
 
@@ -106,8 +148,10 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
       };
     }, []);
 
-    // Save to history
+    // Save to history and broadcast change
     const saveToHistory = useCallback((canvas: FabricCanvas) => {
+      if (isApplyingRemoteChange.current) return;
+      
       const json = JSON.stringify(canvas.toJSON());
       setHistory((prev) => {
         const newHistory = prev.slice(0, historyIndex + 1);
@@ -115,7 +159,10 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
       });
       setHistoryIndex((prev) => prev + 1);
       triggerAutoSave();
-    }, [historyIndex, triggerAutoSave]);
+      
+      // Broadcast the full canvas state for real-time sync
+      onCanvasChange?.({ type: "full", data: canvas.toJSON() });
+    }, [historyIndex, triggerAutoSave, onCanvasChange]);
 
     // Update brush settings
     useEffect(() => {
@@ -372,8 +419,34 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
       toast.success("Canvas exported as PNG");
     };
 
+    // Track cursor position for collaboration
+    useEffect(() => {
+      if (!fabricCanvas || !onCursorMove) return;
+
+      let lastCursorBroadcast = 0;
+      const throttleMs = 50;
+
+      const handleMouseMove = (e: any) => {
+        const now = Date.now();
+        if (now - lastCursorBroadcast < throttleMs) return;
+        lastCursorBroadcast = now;
+
+        const pointer = fabricCanvas.getScenePoint(e.e);
+        onCursorMove({ x: pointer.x, y: pointer.y });
+      };
+
+      fabricCanvas.on("mouse:move", handleMouseMove);
+
+      return () => {
+        fabricCanvas.off("mouse:move", handleMouseMove);
+      };
+    }, [fabricCanvas, onCursorMove]);
+
     return (
-      <div className="flex flex-col h-full">
+      <div className="flex flex-col h-full relative">
+        {/* Collaborator cursors */}
+        <CollaboratorCursors collaborators={collaborators} />
+
         {/* Floating toolbar */}
         <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-2">
           <Toolbar
