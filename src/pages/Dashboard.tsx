@@ -102,19 +102,24 @@ const Dashboard = () => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <h1 className="text-xl font-bold text-foreground">Sketchflow</h1>
-            <OrganizationSwitcher
-              appearance={{
-                elements: {
-                  rootBox: "flex items-center",
-                  organizationSwitcherTrigger: "px-3 py-2 rounded-lg border border-border bg-background hover:bg-muted transition-colors",
-                },
-              }}
-              afterSelectOrganizationUrl="/dashboard"
-              afterSelectPersonalUrl="/dashboard"
-              afterCreateOrganizationUrl="/dashboard"
-              hidePersonal={false}
-              createOrganizationMode="modal"
-            />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
+              <span className="text-sm text-muted-foreground">Workspace:</span>
+              <OrganizationSwitcher
+                appearance={{
+                  elements: {
+                    rootBox: "flex items-center",
+                    organizationSwitcherTrigger: "px-3 py-1.5 rounded-lg border border-border bg-background hover:bg-accent transition-colors text-sm font-medium",
+                    organizationPreviewMainIdentifier: "text-foreground",
+                    organizationSwitcherTriggerIcon: "text-muted-foreground",
+                  },
+                }}
+                afterSelectOrganizationUrl="/dashboard"
+                afterSelectPersonalUrl="/dashboard"
+                afterCreateOrganizationUrl="/dashboard"
+                hidePersonal={false}
+                createOrganizationMode="modal"
+              />
+            </div>
           </div>
           <UserButton afterSignOutUrl="/" />
         </div>
@@ -125,12 +130,12 @@ const Dashboard = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h2 className="text-2xl font-semibold text-foreground">
-              {organization ? organization.name : "My Canvases"}
+              {organization ? `${organization.name} Canvases` : "Personal Canvases"}
             </h2>
             <p className="text-muted-foreground mt-1">
               {organization
-                ? "Canvases shared with your team"
-                : "Your personal workspace"}
+                ? "Shared canvases for your organization"
+                : "Your personal workspace — switch to an organization above to see team canvases"}
             </p>
           </div>
           <Button onClick={handleCreateCanvas} className="gap-2">

@@ -1,26 +1,10 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import { SignedIn, SignedOut, useUser, useOrganization } from "@clerk/clerk-react";
-import { useCanvasStorage } from "@/hooks/useCanvasStorage";
+import { Link } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 const Hero = () => {
-  const navigate = useNavigate();
-  const { user } = useUser();
-  const { organization } = useOrganization();
-  const { createCanvas } = useCanvasStorage();
-
-  const handleStartCreating = async () => {
-    if (user) {
-      const canvas = await createCanvas();
-      if (canvas) {
-        navigate(`/canvas/${canvas.id}`);
-      }
-    } else {
-      navigate("/sign-up");
-    }
-  };
   return (
     <section className="relative min-h-screen pt-32 pb-20 px-4 overflow-hidden bg-hero-gradient">
       {/* Background decorations */}
@@ -89,10 +73,12 @@ const Hero = () => {
               </Link>
             </SignedOut>
             <SignedIn>
-              <Button variant="hero" size="xl" className="group" onClick={handleStartCreating}>
-                Start Creating
-                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-              </Button>
+              <Link to="/dashboard">
+                <Button variant="hero" size="xl" className="group">
+                  Go to Dashboard
+                  <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </Link>
             </SignedIn>
             <Button variant="glass" size="xl">
               Watch Demo
