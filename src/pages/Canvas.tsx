@@ -4,8 +4,10 @@ import { Input } from "@/components/ui/input";
 import { ArrowLeft, Check, Cloud, CloudOff, Pencil, Plus } from "lucide-react";
 import { Link, useParams, useNavigate, useBeforeUnload } from "react-router-dom";
 import { WhiteboardCanvas, WhiteboardCanvasRef } from "@/components/canvas/WhiteboardCanvas";
-import { UserButton, OrganizationSwitcher } from "@clerk/clerk-react";
+import { CollaboratorAvatars } from "@/components/canvas/CollaboratorAvatars";
+import { UserButton, OrganizationSwitcher, useOrganization } from "@clerk/clerk-react";
 import { useCanvasStorage, CanvasData } from "@/hooks/useCanvasStorage";
+import { useRealtimeCollaboration } from "@/hooks/useRealtimeCollaboration";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -13,7 +15,17 @@ const Canvas = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const canvasRef = useRef<WhiteboardCanvasRef>(null);
+  const { organization } = useOrganization();
   const { getCanvas, updateCanvas, createCanvas } = useCanvasStorage();
+  
+  // Real-time collaboration (only active when in an organization)
+  const {
+    collaborators,
+    isConnected,
+    broadcastChange,
+    broadcastCursor,
+    onRemoteChange,
+  } = useRealtimeCollaboration(organization ? id : undefined);
   
   const [canvasData, setCanvasData] = useState<CanvasData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -84,6 +96,25 @@ const Canvas = () => {
       saveCanvas();
     }, 2000);
   }, [saveCanvas]);
+
+  // Handle canvas changes for real-time sync
+  const handleCanvasChange = useCallback(
+    (change: { type: string; data: any }) => {
+      if (organization && isConnected) {
+        broadcastChange(change as any);
+      }
+    },
+    [organization, isConnected, broadcastChange]
+  );
+
+  // Listen for remote changes
+  useEffect(() => {
+    onRemoteChange((change) => {
+      if (canvasRef.current) {
+        canvasRef.current.applyRemoteChange(change);
+      }
+    });
+  }, [onRemoteChange]);
 
   // Save before leaving
   useBeforeUnload(
@@ -208,6 +239,14 @@ const Canvas = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Collaborator avatars */}
+          {organization && (
+            <CollaboratorAvatars
+              collaborators={collaborators}
+              isConnected={isConnected}
+            />
+          )}
+          
           <Button variant="outline" size="sm" className="gap-2" onClick={handleNewCanvas}>
             <Plus className="h-4 w-4" />
             New Canvas
@@ -229,7 +268,13 @@ const Canvas = () => {
 
       {/* Canvas area */}
       <main className="flex-1 relative">
-        <WhiteboardCanvas ref={canvasRef} onAutoSave={handleAutoSave} />
+        <WhiteboardCanvas
+          ref={canvasRef}
+          onAutoSave={handleAutoSave}
+          onCanvasChange={handleCanvasChange}
+          onCursorMove={organization ? broadcastCursor : undefined}
+          collaborators={collaborators}
+        />
       </main>
     </div>
   );
