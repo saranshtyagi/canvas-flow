@@ -80,9 +80,6 @@ const Hero = () => {
                 </Button>
               </Link>
             </SignedIn>
-            <Button variant="glass" size="xl">
-              Watch Demo
-            </Button>
           </motion.div>
         </div>
 
