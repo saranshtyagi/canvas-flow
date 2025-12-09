@@ -328,20 +328,62 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
       };
     }, [fabricCanvas, activeTool, activeColor, strokeWidth, saveToHistory]);
 
-    // Handle eraser
+    // Handle eraser with hover highlight
     useEffect(() => {
       if (!fabricCanvas) return;
 
+      let hoveredObject: FabricObject | null = null;
+      let originalStroke: string | null = null;
+      let originalStrokeWidth: number | null = null;
+
+      const handleMouseOver = (e: any) => {
+        if (activeTool !== "eraser" || !e.target) return;
+        
+        hoveredObject = e.target;
+        originalStroke = e.target.stroke;
+        originalStrokeWidth = e.target.strokeWidth;
+        
+        // Highlight with red dashed outline
+        e.target.set({
+          stroke: '#ef4444',
+          strokeWidth: Math.max(2, (originalStrokeWidth || 2)),
+        });
+        fabricCanvas.renderAll();
+      };
+
+      const handleMouseOut = (e: any) => {
+        if (activeTool !== "eraser" || !e.target || !hoveredObject) return;
+        
+        // Restore original appearance
+        if (hoveredObject === e.target) {
+          e.target.set({
+            stroke: originalStroke,
+            strokeWidth: originalStrokeWidth,
+          });
+          fabricCanvas.renderAll();
+          hoveredObject = null;
+          originalStroke = null;
+          originalStrokeWidth = null;
+        }
+      };
+
       const handleObjectClick = (e: any) => {
         if (activeTool === "eraser" && e.target) {
+          hoveredObject = null;
+          originalStroke = null;
+          originalStrokeWidth = null;
           fabricCanvas.remove(e.target);
           saveToHistory(fabricCanvas);
         }
       };
 
+      fabricCanvas.on("mouse:over", handleMouseOver);
+      fabricCanvas.on("mouse:out", handleMouseOut);
       fabricCanvas.on("mouse:down", handleObjectClick);
 
       return () => {
+        fabricCanvas.off("mouse:over", handleMouseOver);
+        fabricCanvas.off("mouse:out", handleMouseOut);
         fabricCanvas.off("mouse:down", handleObjectClick);
       };
     }, [fabricCanvas, activeTool, saveToHistory]);
@@ -468,7 +510,15 @@ export const WhiteboardCanvas = forwardRef<WhiteboardCanvasRef, WhiteboardCanvas
         {/* Canvas container */}
         <div
           ref={containerRef}
-          className="flex-1 w-full overflow-hidden bg-white cursor-crosshair"
+          className={`flex-1 w-full overflow-hidden bg-white ${
+            activeTool === "eraser" 
+              ? "cursor-[url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.6 5.6c1 1 1 2.5 0 3.4L13 21\"/><path d=\"M22 21H7\"/><path d=\"m5 11 9 9\"/></svg>'),auto]"
+              : activeTool === "select"
+              ? "cursor-default"
+              : activeTool === "text"
+              ? "cursor-text"
+              : "cursor-crosshair"
+          }`}
         >
           <canvas ref={canvasRef} />
         </div>
