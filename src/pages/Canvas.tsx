@@ -174,6 +174,10 @@ const Canvas = () => {
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 bg-card/80 backdrop-blur-sm border-b border-border z-20">
         <div className="flex items-center gap-3">
+          <Link to="/" className="text-lg font-bold text-foreground hover:text-primary transition-colors">
+            Sketchflow
+          </Link>
+          <div className="h-6 w-px bg-border" />
           <Button variant="ghost" size="sm" className="gap-2" onClick={handleBack}>
             <ArrowLeft className="h-4 w-4" />
             Dashboard

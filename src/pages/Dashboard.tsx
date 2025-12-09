@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useUser, useOrganization, OrganizationSwitcher, UserButton } from "@clerk/clerk-react";
 import { Plus, MoreHorizontal, Pencil, Copy, Trash2, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -101,7 +101,9 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 w-full border-b border-border bg-card/80 backdrop-blur-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <h1 className="text-xl font-bold text-foreground">Sketchflow</h1>
+            <Link to="/" className="text-xl font-bold text-foreground hover:text-primary transition-colors">
+              Sketchflow
+            </Link>
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50">
               <span className="text-sm text-muted-foreground">Workspace:</span>
               <OrganizationSwitcher
