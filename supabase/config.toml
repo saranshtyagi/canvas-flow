@@ -1,1 +1,4 @@
 project_id = "acdpmcycabsggrnyucjk"
+
+[functions.canvas-api]
+verify_jwt = false
