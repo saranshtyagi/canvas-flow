@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 const CTA = () => {
   return (
@@ -25,12 +26,22 @@ const CTA = () => {
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
             Join thousands of creators who sketch, plan, and collaborate on Sketchflow.
           </p>
-          <Link to="/canvas">
-            <Button variant="hero" size="xl" className="group">
-              Start Creating Free
-              <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
-            </Button>
-          </Link>
+          <SignedOut>
+            <Link to="/sign-up">
+              <Button variant="hero" size="xl" className="group">
+                Start Creating
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </SignedOut>
+          <SignedIn>
+            <Link to="/dashboard">
+              <Button variant="hero" size="xl" className="group">
+                Go to Dashboard
+                <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              </Button>
+            </Link>
+          </SignedIn>
         </motion.div>
       </div>
     </section>
